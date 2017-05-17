@@ -14,15 +14,21 @@ from django.db.utils import DatabaseError as WrappedDatabaseError
 from django.core.exceptions import ImproperlyConfigured
 from django.db import DEFAULT_DB_ALIAS
 
+from django.utils.six import binary_type, text_type
+from django.utils.encoding import smart_str
+
+from .client import DatabaseClient
+from .creation import DatabaseCreation
 from .introspection import DatabaseIntrospection
 from .operations import DatabaseOperations
 from .features import DatabaseFeatures
 from .schema import DatabaseSchemaEditor
 
 try:
-    import informixdb as Database
+    import pyodbc as Database
 except ImportError as e:
-    raise ImproperlyConfigured("Error loading informixdb module:{}".format(e))
+    e = sys.exc_info()[1]
+    raise ImproperlyConfigured("Error loading pyodbc module:{}".format(e))
 
 DatabaseError = Database.Error
 IntegrityError = Database.IntegrityError
@@ -100,6 +106,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'iendswith': "LIKE '%%' ESCAPE '\\' || UPPER({})",
     }
     Database = Database
+    client_class = DatabaseClient
+    creation_class = DatabaseCreation
+    features_class = DatabaseFeatures
+    introspection_class = DatabaseIntrospection
+    ops_class = DatabaseOperations
     SchemaEditorClass = DatabaseSchemaEditor
 
     def __init__(self, *args, **kwargs):
@@ -127,27 +138,31 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def get_connection_params(self):
         settings = self.settings_dict
-        for k in ['name', 'server', 'user', 'password']:
+        for k in ['name', 'dsn', 'user', 'password']:
             if k not in settings and k.upper() not in settings:
                 raise ImproperlyConfigured(
                     '{} is required for informix connection'.format(k))
         kwargs = {
             'user': settings['USER'],
             'password': settings['PASSWORD'],
-            'dsn': "{}@{}".format(settings['NAME'], settings['SERVER']),
+            'dsn': "{}".format(settings['DSN']),
             'autocommit': False if 'AUTOCOMMIT' not in settings else settings['AUTOCOMMIT']
         }
         return kwargs
 
     def get_new_connection(self, conn_params):
-        self.connection = Database.connect(**conn_params)
+        self.connection = Database.connect(
+            'DSN={dsn}'.format(**conn_params))
+        self.connection.setdecoding(Database.SQL_WCHAR, encoding='UTF-8')
+        self.connection.setdecoding(Database.SQL_CHAR, encoding='UTF-8')
+        self.connection.setencoding(encoding='UTF-8')
         return self.connection
 
     def init_connection_state(self):
         pass
 
-    def create_cursor(self):
-        return self.connection.cursor()
+    def create_cursor(self, name=None):
+        return CursorWrapper(self.connection.cursor(), self)
 
     def _set_autocommit(self, autocommit):
         with self.wrap_database_errors:
@@ -214,3 +229,126 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.connection is not None:
             with self.wrap_database_errors:
                 return self.cursor().execute("ROLLBACK WORK")
+
+class CursorWrapper(object):
+    """
+    A wrapper around the pyodbc's cursor that takes in account a) some pyodbc
+    DB-API 2.0 implementation and b) some common ODBC driver particularities.
+    """
+    def __init__(self, cursor, connection):
+        self.active = True
+        self.cursor = cursor
+        self.connection = connection
+        self.driver_charset = False  # connection.driver_charset
+        self.last_sql = ''
+        self.last_params = ()
+
+    def close(self):
+        if self.active:
+            self.active = False
+            self.cursor.close()
+
+    def format_sql(self, sql, params):
+        if isinstance(sql, text_type):
+            # FreeTDS (and other ODBC drivers?) doesn't support Unicode
+            # yet, so we need to encode the SQL clause itself in utf-8
+            sql = smart_str(sql, self.driver_charset)
+
+        # pyodbc uses '?' instead of '%s' as parameter placeholder.
+        if params is not None:
+            print("sql params", params)
+            pass
+            #sql = sql % tuple('?' * len(params))
+
+        return sql
+
+    def format_params(self, params):
+        fp = []
+        if params is not None:
+            for p in params:
+                if isinstance(p, text_type):
+                    if self.driver_charset:
+                        # FreeTDS (and other ODBC drivers?) doesn't support Unicode
+                        # yet, so we need to encode parameters in utf-8
+                        fp.append(smart_str(p, self.driver_charset))
+                    else:
+                        fp.append(p)
+
+                elif isinstance(p, binary_type):
+                    fp.append(p)
+
+                elif isinstance(p, type(True)):
+                    if p:
+                        fp.append(1)
+                    else:
+                        fp.append(0)
+
+                else:
+                    fp.append(p)
+
+        return tuple(fp)
+
+    def execute(self, sql, params=None):
+        self.last_sql = sql
+        sql = self.format_sql(sql, params)
+        params = self.format_params(params)
+        self.last_params = params
+        try:
+            return self.cursor.execute(sql, params)
+        except Database.Error as e:
+            print(e)
+            # self.connection._on_error(e)
+            raise
+
+    def executemany(self, sql, params_list=()):
+        if not params_list:
+            return None
+        raw_pll = [p for p in params_list]
+        sql = self.format_sql(sql, raw_pll[0])
+        params_list = [self.format_params(p) for p in raw_pll]
+        try:
+            return self.cursor.executemany(sql, params_list)
+        except Database.Error as e:
+            self.connection._on_error(e)
+            raise
+
+    def format_rows(self, rows):
+        return list(map(self.format_row, rows))
+
+    def format_row(self, row):
+        """
+        Decode data coming from the database if needed and convert rows to tuples
+        (pyodbc Rows are not sliceable).
+        """
+        if self.driver_charset:
+            for i in range(len(row)):
+                f = row[i]
+                # FreeTDS (and other ODBC drivers?) doesn't support Unicode
+                # yet, so we need to decode utf-8 data coming from the DB
+                if isinstance(f, binary_type):
+                    row[i] = f.decode(self.driver_charset)
+        return row
+
+    def fetchone(self):
+        row = self.cursor.fetchone()
+        if row is not None:
+            row = self.format_row(row)
+        # Any remaining rows in the current set must be discarded
+        # before changing autocommit mode when you use FreeTDS
+        self.cursor.nextset()
+        return row
+
+    def fetchmany(self, chunk):
+        return self.format_rows(self.cursor.fetchmany(chunk))
+
+    def fetchall(self):
+        return self.format_rows(self.cursor.fetchall())
+
+    def __getattr__(self, attr):
+        if attr in self.__dict__:
+            return self.__dict__[attr]
+        return getattr(self.cursor, attr)
+
+    def __iter__(self):
+        return iter(self.cursor)
+

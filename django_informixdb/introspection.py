@@ -2,7 +2,7 @@ from django.db.backends.base.introspection import (
     BaseDatabaseIntrospection, FieldInfo, TableInfo)
 
 from .datatypes import *
-
+from .tableignore import EXCLUDE_SYS_TABLES
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     # Map type codes to Django Field types.
@@ -18,27 +18,32 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         SQL_TYPE_FLOAT: 'FloatField',
         SQL_TYPE_DOUBLE: 'FloatField',
         SQL_TYPE_INTEGER: 'IntegerField',
-        SQL_TYPE_MONEY: '??',
         SQL_TYPE_INTERVAL: '??',
         SQL_TYPE_SERIAL: 'AutoField',
         SQL_TYPE_SMALLINT: 'SmallIntegerField',
         SQL_TYPE_TEXT: 'TextField',
         SQL_TYPE_VARCHAR: 'CharField',
         SQL_TYPE_MASK: '??',
+        SQL_TYPE_MONEY: 'DecimalField'
     }
 
     ignored_tables = []
 
     def get_table_list(self, cursor):
         cursor.execute('SELECT tabname, tabtype FROM systables')
-        return [TableInfo(x[0], x[1].lower()) for x in cursor.fetchall()]
+        # We want to ignore all the internal 'sys' tables in the exclude list
+        return [
+            TableInfo(x[0], x[1].lower()) for x in cursor.fetchall() 
+            if x[0] not in EXCLUDE_SYS_TABLES
+        ]
 
     def get_table_description(self, cursor, table_name):
         "Returns a description of the table, with the DB-API cursor.description interface."
         query_format = """SELECT c.* FROM syscolumns c JOIN systables t
                         ON c.tabid=t.tabid WHERE t.tabname='{}'"""
+                
         cursor.execute(query_format.format(table_name))
-        columns = [[c[0], c[3] % 256, None, c[4], c[4], None, 0 if c[3] > 256 else 1]
+        columns = [[c[0], c[3] % 256, None, c[4], c[4], None, 0 if c[3] > 256 else 1, None]
                    for c in cursor.fetchall()]
         items = []
         for column in columns:
