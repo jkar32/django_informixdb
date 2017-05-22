@@ -15,6 +15,7 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_alter_column_default = "MODIFY %(column)s DEFAULT "
     sql_alter_column_no_default = "MODIFY %(column)s DROP DEFAULT"
     sql_delete_column = "ALTER TABLE %(table)s DROP %(column)s"
+    # sql_create_table = ""
 
     def execute(self, sql, params=[]):
         """

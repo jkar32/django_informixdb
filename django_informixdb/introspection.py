@@ -24,7 +24,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         SQL_TYPE_TEXT: 'TextField',
         SQL_TYPE_VARCHAR: 'CharField',
         SQL_TYPE_MASK: '??',
-        SQL_TYPE_MONEY: 'DecimalField'
+        SQL_TYPE_MONEY: 'DecimalField',
     }
 
     ignored_tables = []

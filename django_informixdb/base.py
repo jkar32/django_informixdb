@@ -131,7 +131,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         self.features = DatabaseFeatures(self)
         self.ops = DatabaseOperations(self)
-        # self.client = DatabaseClient(self)
+        self.client = DatabaseClient(self)
         self.creation = BaseDatabaseCreation(self)
         self.introspection = DatabaseIntrospection(self)
         self.validation = BaseDatabaseValidation(self)
@@ -256,7 +256,6 @@ class CursorWrapper(object):
 
         # pyodbc uses '?' instead of '%s' as parameter placeholder.
         if params is not None:
-            print("sql params", params)
             pass
             #sql = sql % tuple('?' * len(params))
 
@@ -297,6 +296,7 @@ class CursorWrapper(object):
             return self.cursor.execute(sql, params)
         except Database.Error as e:
             print(e)
+            # XXX: not supported
             # self.connection._on_error(e)
             raise
 
