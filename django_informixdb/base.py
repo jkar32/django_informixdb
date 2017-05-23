@@ -150,12 +150,26 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         }
         return kwargs
 
+    def _handle_constraint(self, b_data):
+        """
+        PyODBC will not handle a -101 type which is a informix constraint
+        This is a simple unpacking of a bytes type.
+        _idx: constraint id
+        _idtype: constraint type
+        """
+        return b_data.decode('utf8')
+
+
     def get_new_connection(self, conn_params):
         self.connection = Database.connect(
             'DSN={dsn}'.format(**conn_params))
         self.connection.setdecoding(Database.SQL_WCHAR, encoding='UTF-8')
         self.connection.setdecoding(Database.SQL_CHAR, encoding='UTF-8')
+        self.connection.setdecoding(Database.SQL_WMETADATA, encoding='UTF-8')
         self.connection.setencoding(encoding='UTF-8')
+        
+        self.connection.add_output_converter(-101, self._handle_constraint)
+
         return self.connection
 
     def init_connection_state(self):

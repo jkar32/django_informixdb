@@ -6,26 +6,7 @@ from .tableignore import EXCLUDE_SYS_TABLES
 
 class DatabaseIntrospection(BaseDatabaseIntrospection):
     # Map type codes to Django Field types.
-    data_types_reverse = {
-        SQL_TYPE_BYTE: 'BinaryField',
-        SQL_TYPE_CHAR: 'CharField',
-        SQL_TYPE_DATE: 'DateField',
-        SQL_TYPE_DATETIME: 'DateTimeField',
-        SQL_TYPE_REAL: 'FloatField',
-        SQL_TYPE_SMFLOAT: 'FloatField',
-        SQL_TYPE_DECIMAL: 'DecimalField',
-        SQL_TYPE_NUMERIC: 'DecimalField',
-        SQL_TYPE_FLOAT: 'FloatField',
-        SQL_TYPE_DOUBLE: 'FloatField',
-        SQL_TYPE_INTEGER: 'IntegerField',
-        SQL_TYPE_INTERVAL: '??',
-        SQL_TYPE_SERIAL: 'AutoField',
-        SQL_TYPE_SMALLINT: 'SmallIntegerField',
-        SQL_TYPE_TEXT: 'TextField',
-        SQL_TYPE_VARCHAR: 'CharField',
-        SQL_TYPE_MASK: '??',
-        SQL_TYPE_MONEY: 'DecimalField',
-    }
+    data_types_reverse = {_id: v for _id, _, v in informix_types}
 
     ignored_tables = []
 
@@ -41,7 +22,7 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
         "Returns a description of the table, with the DB-API cursor.description interface."
         query_format = """SELECT c.* FROM syscolumns c JOIN systables t
                         ON c.tabid=t.tabid WHERE t.tabname='{}'"""
-                
+
         cursor.execute(query_format.format(table_name))
         columns = [[c[0], c[3] % 256, None, c[4], c[4], None, 0 if c[3] > 256 else 1, None]
                    for c in cursor.fetchall()]
@@ -50,7 +31,11 @@ class DatabaseIntrospection(BaseDatabaseIntrospection):
             if column[1] in [SQL_TYPE_NUMERIC, SQL_TYPE_DECIMAL]:
                 column[4] = int(column[3] / 256)
                 column[5] = column[3] - column[4] * 256
+            # FieldInfo = namedtuple('FieldInfo', 'name type_code display_size internal_size precision scale null_ok default')
+            # The named tuple above will help decypher the introspection process.
+            # We care alot about the type column
             items.append(FieldInfo(*column))
+
         return items
 
     def get_key_columns(self, cursor, table_name):

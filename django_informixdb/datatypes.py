@@ -57,7 +57,9 @@ informix_types = [
 	(17, 'SQL_TYPE_INT8', 'IntegerField'),
 	(18, 'SQL_TYPE_SERIAL8', 'AutoField'),
 	(19, 'SQL_TYPE_SET', '??'),
-	(31, 'SQL_TYPE_MASK', '??')
+	(31, 'SQL_TYPE_MASK', '??'),
+	(40, 'SQL_TYPE_LVARCHAR', 'CharField'),
+	(43, 'SQL_TYPE_LVARCHAR', 'CharField'),
 ]
 
 SQL_TYPE_CHAR = 0
