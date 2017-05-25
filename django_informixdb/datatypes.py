@@ -34,32 +34,57 @@
 """
 
 informix_types = [
-	(0, 'SQL_TYPE_CHAR', 'CharField'),
-	(1, 'SQL_TYPE_SMALLINT', 'SmallIntegerField'),
-	(2, 'SQL_TYPE_INTEGER', 'IntegerField'),
-	(3, 'SQL_TYPE_FLOAT', 'FloatField'),
-	(3, 'SQL_TYPE_DOUBLE', 'FloatField'),
-	(4, 'SQL_TYPE_REAL', 'FloatField'),
-	(4, 'SQL_TYPE_SMFLOAT', 'FloatField'),
-	(5, 'SQL_TYPE_DECIMAL', 'DecimalField'),
-	(5, 'SQL_TYPE_NUMERIC', 'DecimalField'),
-	(6, 'SQL_TYPE_SERIAL', 'AutoField'),
-	(7, 'SQL_TYPE_DATE', 'DateField'),
-	(8, 'SQL_TYPE_MONEY', 'DecimalField'),
-	(9, 'SQL_TYPE_NULL', '??'),
-	(10, 'SQL_TYPE_DATETIME', 'DateTimeField'),
-	(11, 'SQL_TYPE_BYTE', 'BinaryField'),
-	(12, 'SQL_TYPE_TEXT', 'TextField'),
-	(13, 'SQL_TYPE_VARCHAR', 'CharField'),
-	(14, 'SQL_TYPE_INTERVAL', '??'),
-	(15, 'SQL_TYPE_NCHAR', 'CharField'),
-	(16, 'SQL_TYPE_NVARCHAR', 'CharField'),
-	(17, 'SQL_TYPE_INT8', 'IntegerField'),
-	(18, 'SQL_TYPE_SERIAL8', 'AutoField'),
-	(19, 'SQL_TYPE_SET', '??'),
-	(31, 'SQL_TYPE_MASK', '??'),
-	(40, 'SQL_TYPE_LVARCHAR', 'CharField'),
+    (0, 'SQL_TYPE_CHAR', 'CharField'),
+    (1, 'SQL_TYPE_SMALLINT', 'SmallIntegerField'),
+    (2, 'SQL_TYPE_INTEGER', 'IntegerField'),
+    (3, 'SQL_TYPE_FLOAT', 'FloatField'),
+    (3, 'SQL_TYPE_DOUBLE', 'FloatField'),
+    (4, 'SQL_TYPE_REAL', 'FloatField'),
+    (4, 'SQL_TYPE_SMFLOAT', 'FloatField'),
+    (5, 'SQL_TYPE_DECIMAL', 'DecimalField'),
+    (5, 'SQL_TYPE_NUMERIC', 'DecimalField'),
+    (6, 'SQL_TYPE_SERIAL', 'AutoField'),
+    (7, 'SQL_TYPE_DATE', 'DateField'),
+    (8, 'SQL_TYPE_MONEY', 'DecimalField'),
+    (9, 'SQL_TYPE_NULL', '??'),
+    (10, 'SQL_TYPE_DATETIME', 'DateTimeField'),
+    (11, 'SQL_TYPE_BYTE', 'BinaryField'),
+    (12, 'SQL_TYPE_TEXT', 'TextField'),
+    (13, 'SQL_TYPE_VARCHAR', 'CharField'),
+    (14, 'SQL_TYPE_INTERVAL', '??'),
+    (15, 'SQL_TYPE_NCHAR', 'CharField'),
+    (16, 'SQL_TYPE_NVARCHAR', 'CharField'),
+    (17, 'SQL_TYPE_INT8', 'IntegerField'),
+    (18, 'SQL_TYPE_SERIAL8', 'AutoField'),
+    (19, 'SQL_TYPE_SET', '??'),
+    (31, 'SQL_TYPE_MASK', '??'),
+    (40, 'SQL_TYPE_LVARCHAR', 'CharField'),
     (43, 'SQL_TYPE_LVARCHAR', 'CharField'),
     (45, 'SQL_TYPE_BOOLEAN', 'BoolField'),
-	(52, 'SQL_TYPE_BIGINT', 'IntegerField'),
+    (52, 'SQL_TYPE_BIGINT', 'IntField'),
 ]
+
+SQL_TYPE_CHAR = 0
+SQL_TYPE_SMALLINT = 1
+SQL_TYPE_INTEGER = 2
+SQL_TYPE_FLOAT = 3
+SQL_TYPE_DOUBLE = 3
+SQL_TYPE_REAL = 4
+SQL_TYPE_SMFLOAT = 4
+SQL_TYPE_DECIMAL = 5
+SQL_TYPE_NUMERIC = 5
+SQL_TYPE_SERIAL = 6
+SQL_TYPE_DATE = 7
+SQL_TYPE_MONEY = 8
+SQL_TYPE_NULL = 9
+SQL_TYPE_DATETIME = 10
+SQL_TYPE_BYTE = 11
+SQL_TYPE_TEXT = 12
+SQL_TYPE_VARCHAR = 13
+SQL_TYPE_INTERVAL = 14
+SQL_TYPE_NCHAR = 15
+SQL_TYPE_NVARCHAR = 16
+SQL_TYPE_INT8 = 17
+SQL_TYPE_SERIAL8 = 18
+SQL_TYPE_SET = 19
+SQL_TYPE_MASK = 31
