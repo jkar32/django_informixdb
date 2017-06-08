@@ -3,7 +3,8 @@ informix database backend for Django.
 
 Requires informixdb
 """
-
+import os
+import platform
 import warnings
 
 from django.conf import settings
@@ -36,6 +37,12 @@ IntegrityError = Database.IntegrityError
 
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'informixdb'
+
+    DRIVER_MAP = {
+        'DARWIN': '/usr/local/lib/iclit09b.dylib',
+        'LINUX': '/opt/IBM/informixlib/iclit09b.so',
+        'WINDOWS': None
+    }
 
     data_types = {
         'AutoField': 'serial',
@@ -136,33 +143,63 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.introspection = DatabaseIntrospection(self)
         self.validation = BaseDatabaseValidation(self)
 
+    def get_driver_path(self):
+        system = platform.system().upper()
+        try:
+            return self.DRIVER_MAP[system]
+        except KeyError:
+            raise ImproperlyConfigured('cannot locate informix driver, please specify')
+
+
     def get_connection_params(self):
         settings = self.settings_dict
-        for k in ['name', 'dsn', 'user', 'password']:
-            if k not in settings and k.upper() not in settings:
-                raise ImproperlyConfigured(
-                    '{} is required for informix connection'.format(k))
-        kwargs = {
-            'user': settings['USER'],
-            'password': settings['PASSWORD'],
-            'dsn': "{}".format(settings['DSN']),
-            'autocommit': False if 'AUTOCOMMIT' not in settings else settings['AUTOCOMMIT']
-        }
-        return kwargs
 
-    def _handle_constraint(self, b_data):
+        if 'DSN' not in settings:
+            for k in ['NAME', 'SERVER', 'USER', 'PASSWORD']:
+                if k not in settings:
+                    raise ImproperlyConfigured('{} is a required setting for an informix connection'.format(k))
+        conn_params = settings.copy()
+
+        # Ensure the driver is set in the options
+        options = conn_params.get('OPTIONS', {})
+        if 'DRIVER' not in options:
+            options['DRIVER'] = self.get_driver_path()
+        if not os.path.exists(options['DRIVER']):
+            raise ImproperlyConfigured('cannot find Informix driver at {}'.format(options['DRIVER']))
+        conn_params['OPTIONS'] = options
+
+        conn_params['AUTOCOMMIT'] = False if 'AUTOCOMMIT' not in conn_params else conn_params['AUTOCOMMIT']
+
+        return conn_params
+
+    def _handle_constraint(self, raw_data):
         """
         PyODBC will not handle a -101 type which is a informix constraint
         This is a simple unpacking of a bytes type.
         _idx: constraint id
         _idtype: constraint type
         """
-        return b_data.decode('utf8')
+        return raw_data.decode('utf8')
 
 
     def get_new_connection(self, conn_params):
-        self.connection = Database.connect(
-            'DSN={dsn}'.format(**conn_params))
+        parts = [
+            'Driver={{{}}}'.format(conn_params['OPTIONS']['DRIVER']),
+        ]
+        if 'DSN' in conn_params:
+            parts.append('DSN={}'.format(conn_params['DSN']))
+        if 'SERVER' in conn_params:
+            parts.append('Server={}'.format(conn_params['SERVER']))
+        if 'NAME' in conn_params:
+            parts.append('Database={}'.format(conn_params['NAME']))
+        if 'USER' in conn_params:
+            parts.append('Uid={}'.format(conn_params['USER']))
+        if 'PASSWORD' in conn_params:
+            parts.append('Pwd={}'.format(conn_params['PASSWORD']))
+        connection_string = ';'.join(parts)
+
+        self.connection = Database.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
+
         self.connection.setdecoding(Database.SQL_WCHAR, encoding='UTF-8')
         self.connection.setdecoding(Database.SQL_CHAR, encoding='UTF-8')
         self.connection.setdecoding(Database.SQL_WMETADATA, encoding='UTF-8')
