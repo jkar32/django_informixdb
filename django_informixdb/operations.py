@@ -62,9 +62,7 @@ class DatabaseOperations(BaseDatabaseOperations):
     def savepoint_commit_sql(self, sid):
         return "RELEASE SAVEPOINT %s" % sid
 
-
     def get_db_converters(self, expression):
-        # print(print(expression)
         converters = super(DatabaseOperations, self).get_db_converters(expression)
         internal_type = expression.output_field.get_internal_type()
         if internal_type == 'BooleanField':
@@ -118,4 +116,3 @@ class DatabaseOperations(BaseDatabaseOperations):
 
     def adapt_timefield_value(self, value):
         return value
-

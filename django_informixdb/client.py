@@ -41,10 +41,10 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 from django.db.backends.base.client import BaseDatabaseClient
-import os
-import sys
+
 
 class DatabaseClient(BaseDatabaseClient):
+    # @todo: isql only accepts a DSN, not a connection string :-(
     executable_name = 'isql'
 
     def runshell(self):
@@ -52,7 +52,7 @@ class DatabaseClient(BaseDatabaseClient):
 
         user = settings_dict['USER']
         password = settings_dict['PASSWORD']
-    
+
         dsn = settings_dict['DSN']
         args = ['%s -v %s %s %s' % (self.executable_name, dsn, user, password)]
 

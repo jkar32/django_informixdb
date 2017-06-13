@@ -1,3 +1,5 @@
+import sys
+
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.utils import ProgrammingError, DatabaseError
 
@@ -25,7 +27,6 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
         try:
             super(DatabaseSchemaEditor, self).execute(sql, params)
         except (ProgrammingError, DatabaseError) as e:
-            import sys
             if "CREATE INDEX" in sql:
                 sys.stderr.write("Fail to create index:{}\n".format(sql))
             else:

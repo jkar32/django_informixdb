@@ -1,3 +1,4 @@
+from enum import Enum
 """
     0 = CHAR
     1 = SMALLINT
@@ -33,58 +34,43 @@
     4118 = ROW (named)
 """
 
-informix_types = [
-    (0, 'SQL_TYPE_CHAR', 'CharField'),
-    (1, 'SQL_TYPE_SMALLINT', 'SmallIntegerField'),
-    (2, 'SQL_TYPE_INTEGER', 'IntegerField'),
-    (3, 'SQL_TYPE_FLOAT', 'FloatField'),
-    (3, 'SQL_TYPE_DOUBLE', 'FloatField'),
-    (4, 'SQL_TYPE_REAL', 'FloatField'),
-    (4, 'SQL_TYPE_SMFLOAT', 'FloatField'),
-    (5, 'SQL_TYPE_DECIMAL', 'DecimalField'),
-    (5, 'SQL_TYPE_NUMERIC', 'DecimalField'),
-    (6, 'SQL_TYPE_SERIAL', 'AutoField'),
-    (7, 'SQL_TYPE_DATE', 'DateField'),
-    (8, 'SQL_TYPE_MONEY', 'DecimalField'),
-    (9, 'SQL_TYPE_NULL', '??'),
-    (10, 'SQL_TYPE_DATETIME', 'DateTimeField'),
-    (11, 'SQL_TYPE_BYTE', 'BinaryField'),
-    (12, 'SQL_TYPE_TEXT', 'TextField'),
-    (13, 'SQL_TYPE_VARCHAR', 'CharField'),
-    (14, 'SQL_TYPE_INTERVAL', '??'),
-    (15, 'SQL_TYPE_NCHAR', 'CharField'),
-    (16, 'SQL_TYPE_NVARCHAR', 'CharField'),
-    (17, 'SQL_TYPE_INT8', 'IntegerField'),
-    (18, 'SQL_TYPE_SERIAL8', 'AutoField'),
-    (19, 'SQL_TYPE_SET', '??'),
-    (31, 'SQL_TYPE_MASK', '??'),
-    (40, 'SQL_TYPE_LVARCHAR', 'CharField'),
-    (43, 'SQL_TYPE_LVARCHAR', 'CharField'),
-    (45, 'SQL_TYPE_BOOLEAN', 'BoolField'),
-    (52, 'SQL_TYPE_BIGINT', 'IntField'),
-]
+class InformixTypes(Enum):
+    SQL_TYPE_CHAR = 0, 'CharField'
+    SQL_TYPE_SMALLINT = 1, 'SmallIntegerField'
+    SQL_TYPE_INTEGER = 2, 'IntegerField'
+    SQL_TYPE_FLOAT = 3, 'FloatField'
+    SQL_TYPE_DOUBLE = 3, 'FloatField'
+    SQL_TYPE_REAL = 4, 'FloatField'
+    SQL_TYPE_SMFLOAT = 4, 'FloatField'
+    SQL_TYPE_DECIMAL = 5, 'DecimalField'
+    SQL_TYPE_NUMERIC = 5, 'DecimalField'
+    SQL_TYPE_SERIAL = 6, 'AutoField'
+    SQL_TYPE_DATE = 7, 'DateField'
+    SQL_TYPE_MONEY = 8, 'DecimalField'
+    SQL_TYPE_NULL = 9, None
+    SQL_TYPE_DATETIME = 10, 'DateTimeField'
+    SQL_TYPE_BYTE = 11, 'BinaryField'
+    SQL_TYPE_TEXT = 12, 'TextField'
+    SQL_TYPE_VARCHAR = 13, 'CharField'
+    SQL_TYPE_INTERVAL = 14, 'DurationField'
+    SQL_TYPE_NCHAR = 15, 'CharField'
+    SQL_TYPE_NVARCHAR = 16, 'CharField'
+    SQL_TYPE_INT8 = 17, 'IntegerField'
+    SQL_TYPE_SERIAL8 = 18, 'AutoField'
+    SQL_TYPE_SET = 19, None
+    SQL_TYPE_MASK = 31, None
+    SQL_TYPE_UDTVAR = 40, 'CharField'
+    SQL_TYPE_UDTFIXED = 41, None
+    SQL_TYPE_LVARCHAR = 43, 'CharField'
+    SQL_TYPE_BOOLEAN = 45, 'BoolField'
+    SQL_TYPE_BIGINT = 52, 'BigIntegerField'
+    SQL_TYPE_BIG_SERIAL = 53, 'AutoField'
 
-SQL_TYPE_CHAR = 0
-SQL_TYPE_SMALLINT = 1
-SQL_TYPE_INTEGER = 2
-SQL_TYPE_FLOAT = 3
-SQL_TYPE_DOUBLE = 3
-SQL_TYPE_REAL = 4
-SQL_TYPE_SMFLOAT = 4
-SQL_TYPE_DECIMAL = 5
-SQL_TYPE_NUMERIC = 5
-SQL_TYPE_SERIAL = 6
-SQL_TYPE_DATE = 7
-SQL_TYPE_MONEY = 8
-SQL_TYPE_NULL = 9
-SQL_TYPE_DATETIME = 10
-SQL_TYPE_BYTE = 11
-SQL_TYPE_TEXT = 12
-SQL_TYPE_VARCHAR = 13
-SQL_TYPE_INTERVAL = 14
-SQL_TYPE_NCHAR = 15
-SQL_TYPE_NVARCHAR = 16
-SQL_TYPE_INT8 = 17
-SQL_TYPE_SERIAL8 = 18
-SQL_TYPE_SET = 19
-SQL_TYPE_MASK = 31
+    def __init__(self, num, field = None):
+        self.num = num
+        self.field = field
+
+
+    @classmethod
+    def field_map(cls):
+        return {e.num: e.field for e in cls}

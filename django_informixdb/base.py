@@ -4,6 +4,7 @@ informix database backend for Django.
 Requires informixdb
 """
 import os
+import sys
 import platform
 import warnings
 
@@ -26,17 +27,15 @@ from .features import DatabaseFeatures
 from .schema import DatabaseSchemaEditor
 
 try:
-    import pyodbc as Database
+    import pyodbc
 except ImportError as e:
     e = sys.exc_info()[1]
     raise ImproperlyConfigured("Error loading pyodbc module:{}".format(e))
 
-DatabaseError = Database.Error
-IntegrityError = Database.IntegrityError
-
 
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'informixdb'
+    Database = pyodbc
 
     DRIVER_MAP = {
         'DARWIN': '/usr/local/lib/iclit09b.dylib',
@@ -112,7 +111,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'endswith': "LIKE '%%' ESCAPE '\\' || {}",
         'iendswith': "LIKE '%%' ESCAPE '\\' || UPPER({})",
     }
-    Database = Database
     client_class = DatabaseClient
     creation_class = DatabaseCreation
     features_class = DatabaseFeatures
@@ -150,7 +148,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         except KeyError:
             raise ImproperlyConfigured('cannot locate informix driver, please specify')
 
-
     def get_connection_params(self):
         settings = self.settings_dict
 
@@ -181,7 +178,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         """
         return raw_data.decode('utf8')
 
-
     def get_new_connection(self, conn_params):
         parts = [
             'Driver={{{}}}'.format(conn_params['OPTIONS']['DRIVER']),
@@ -198,13 +194,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             parts.append('Pwd={}'.format(conn_params['PASSWORD']))
         connection_string = ';'.join(parts)
 
-        self.connection = Database.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
+        self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
-        self.connection.setdecoding(Database.SQL_WCHAR, encoding='UTF-8')
-        self.connection.setdecoding(Database.SQL_CHAR, encoding='UTF-8')
-        self.connection.setdecoding(Database.SQL_WMETADATA, encoding='UTF-8')
+        self.connection.setdecoding(pyodbc.SQL_WCHAR, encoding='UTF-8')
+        self.connection.setdecoding(pyodbc.SQL_CHAR, encoding='UTF-8')
+        self.connection.setdecoding(pyodbc.SQL_WMETADATA, encoding='UTF-8')
         self.connection.setencoding(encoding='UTF-8')
-        
+
         self.connection.add_output_converter(-101, self._handle_constraint)
 
         return self.connection
@@ -238,7 +234,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         try:
             # Use a cursor directly, bypassing Django's utilities.
             self.connection.cursor().execute("SELECT 1")
-        except Database.Error:
+        except pyodbc.Error:
             return False
         else:
             return True
@@ -254,7 +250,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         nodb_connection = super(DatabaseWrapper, self)._nodb_connection
         try:
             nodb_connection.ensure_connection()
-        except (DatabaseError, WrappedDatabaseError):
+        except (pyodbc.Error, WrappedDatabaseError):
             warnings.warn(
                 "Normally Django will use a connection to the database "
                 "to avoid running initialization queries against the production "
@@ -280,6 +276,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if self.connection is not None:
             with self.wrap_database_errors:
                 return self.cursor().execute("ROLLBACK WORK")
+
 
 class CursorWrapper(object):
     """
@@ -308,7 +305,7 @@ class CursorWrapper(object):
         # pyodbc uses '?' instead of '%s' as parameter placeholder.
         if params is not None:
             pass
-            #sql = sql % tuple('?' * len(params))
+            # sql = sql % tuple('?' * len(params))
 
         return sql
 
@@ -345,10 +342,8 @@ class CursorWrapper(object):
         self.last_params = params
         try:
             return self.cursor.execute(sql, params)
-        except Database.Error as e:
-            print(e)
-            # XXX: not supported
-            # self.connection._on_error(e)
+        except pyodbc.Error as e:
+            self.connection._on_error(e)
             raise
 
     def executemany(self, sql, params_list=()):
@@ -359,7 +354,7 @@ class CursorWrapper(object):
         params_list = [self.format_params(p) for p in raw_pll]
         try:
             return self.cursor.executemany(sql, params_list)
-        except Database.Error as e:
+        except pyodbc.Error as e:
             self.connection._on_error(e)
             raise
 
@@ -402,4 +397,3 @@ class CursorWrapper(object):
 
     def __iter__(self):
         return iter(self.cursor)
-
