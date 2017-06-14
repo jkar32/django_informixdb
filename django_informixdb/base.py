@@ -10,9 +10,8 @@ import warnings
 
 from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
-from django.db.backends.base.creation import BaseDatabaseCreation
 from django.db.backends.base.validation import BaseDatabaseValidation
-from django.db.utils import DatabaseError as WrappedDatabaseError
+from django.db.utils import DatabaseError as WrappedDatabaseError, Error as WrappedError
 from django.core.exceptions import ImproperlyConfigured
 from django.db import DEFAULT_DB_ALIAS
 
@@ -38,9 +37,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     Database = pyodbc
 
     DRIVER_MAP = {
-        'DARWIN': '/usr/local/lib/iclit09b.dylib',
+        'DARWIN': '/Applications/IBM/informix/lib/cli/iclit09b.dylib',
         'LINUX': '/opt/IBM/informixlib/iclit09b.so',
-        'WINDOWS': None
     }
 
     data_types = {
@@ -117,6 +115,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     introspection_class = DatabaseIntrospection
     ops_class = DatabaseOperations
     SchemaEditorClass = DatabaseSchemaEditor
+    validation_class = BaseDatabaseValidation
 
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
@@ -134,12 +133,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                         ops[op] = '%s COLLATE %s' % (sql, self.collation)
                 self.operators.update(ops)
 
-        self.features = DatabaseFeatures(self)
-        self.ops = DatabaseOperations(self)
-        self.client = DatabaseClient(self)
-        self.creation = BaseDatabaseCreation(self)
-        self.introspection = DatabaseIntrospection(self)
-        self.validation = BaseDatabaseValidation(self)
+        self.features = self.features_class(self)
+        self.ops = self.ops_class(self)
+        self.client = self.client_class(self)
+        self.creation = self.creation_class(self)
+        self.introspection = self.introspection_class(self)
+        self.validation = self.validation_class(self)
 
     def get_driver_path(self):
         system = platform.system().upper()
@@ -186,14 +185,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             parts.append('DSN={}'.format(conn_params['DSN']))
         if 'SERVER' in conn_params:
             parts.append('Server={}'.format(conn_params['SERVER']))
-        if 'NAME' in conn_params:
+        if 'NAME' in conn_params and conn_params['NAME'] is not None:
             parts.append('Database={}'.format(conn_params['NAME']))
         if 'USER' in conn_params:
             parts.append('Uid={}'.format(conn_params['USER']))
         if 'PASSWORD' in conn_params:
             parts.append('Pwd={}'.format(conn_params['PASSWORD']))
         connection_string = ';'.join(parts)
-
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
         self.connection.setdecoding(pyodbc.SQL_WCHAR, encoding='UTF-8')
@@ -202,7 +200,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection.setencoding(encoding='UTF-8')
 
         self.connection.add_output_converter(-101, self._handle_constraint)
-
         return self.connection
 
     def init_connection_state(self):
@@ -250,12 +247,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         nodb_connection = super(DatabaseWrapper, self)._nodb_connection
         try:
             nodb_connection.ensure_connection()
-        except (pyodbc.Error, WrappedDatabaseError):
+        except (pyodbc.Error, WrappedDatabaseError, WrappedError):
             warnings.warn(
                 "Normally Django will use a connection to the database "
                 "to avoid running initialization queries against the production "
                 "database when it's not needed (for example, when running tests). "
-                "Django was unable to create a connection to the 'postgres' database "
+                "Django was unable to create a connection to the 'Informix' database "
                 "and will use the default database instead.",
                 RuntimeWarning
             )
@@ -340,11 +337,7 @@ class CursorWrapper(object):
         sql = self.format_sql(sql, params)
         params = self.format_params(params)
         self.last_params = params
-        try:
-            return self.cursor.execute(sql, params)
-        except pyodbc.Error as e:
-            self.connection._on_error(e)
-            raise
+        return self.cursor.execute(sql, params)
 
     def executemany(self, sql, params_list=()):
         if not params_list:
@@ -352,11 +345,7 @@ class CursorWrapper(object):
         raw_pll = [p for p in params_list]
         sql = self.format_sql(sql, raw_pll[0])
         params_list = [self.format_params(p) for p in raw_pll]
-        try:
-            return self.cursor.executemany(sql, params_list)
-        except pyodbc.Error as e:
-            self.connection._on_error(e)
-            raise
+        return self.cursor.executemany(sql, params_list)
 
     def format_rows(self, rows):
         return list(map(self.format_row, rows))

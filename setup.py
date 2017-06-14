@@ -24,15 +24,15 @@ setup(
     # https://packaging.python.org/en/latest/single_source_version.html
     version=version,
 
-    description='A database driver for Django to connect to an informix db',
+    description='A database driver for Django to connect to an Informix db via ODBC',
     long_description=long_description,
 
     # The project's main homepage.
-    url='https://github.com/leowa/django_informixdb',
+    url='https://github.com/commoncode/django_informixdb',
 
     # Author details
-    author='Andy Zhang',
-    author_email='leowa@outlook.com',
+    author='Common code',
+    author_email='weare@commoncode.io',
 
     # Choose your license
     license='APLv2',
@@ -52,11 +52,6 @@ setup(
 
         'License :: OSI Approved :: Apache Software License',
 
-        # Specify the Python versions you support here. In particular, ensure
-        # that you indicate whether you support Python 2, Python 3 or both.
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.6',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',

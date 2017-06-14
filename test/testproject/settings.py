@@ -77,10 +77,13 @@ WSGI_APPLICATION = 'testproject.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django_informixdb',
-        'NAME': 'test2',
-        'SERVER': 'ifxserver',
-        'USER' : 'cdstest',
-        'PASSWORD': 'passw0rd',
+        'NAME': 'adapter',
+        'SERVER': 'dev',
+        'USER': 'informix',
+        'PASSWORD': 'in4mix',
+        'OPTIONS': {
+            'DRIVER': '/Applications/IBM/informix/lib/cli/iclit09b.dylib'
+        }
     }
 }
 
