@@ -8,12 +8,10 @@ import sys
 import platform
 import warnings
 
-from django.conf import settings
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.validation import BaseDatabaseValidation
 from django.db.utils import DatabaseError as WrappedDatabaseError, Error as WrappedError
 from django.core.exceptions import ImproperlyConfigured
-from django.db import DEFAULT_DB_ALIAS
 
 from django.utils.six import binary_type, text_type
 from django.utils.encoding import smart_str
@@ -181,16 +179,22 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         parts = [
             'Driver={{{}}}'.format(conn_params['OPTIONS']['DRIVER']),
         ]
+
         if 'DSN' in conn_params:
             parts.append('DSN={}'.format(conn_params['DSN']))
         if 'SERVER' in conn_params:
             parts.append('Server={}'.format(conn_params['SERVER']))
         if 'NAME' in conn_params and conn_params['NAME'] is not None:
             parts.append('Database={}'.format(conn_params['NAME']))
+        elif conn_params['NAME'] is None:
+            parts.append('CONNECTDATABASE=no')
         if 'USER' in conn_params:
             parts.append('Uid={}'.format(conn_params['USER']))
         if 'PASSWORD' in conn_params:
             parts.append('Pwd={}'.format(conn_params['PASSWORD']))
+        if 'CPTIMEOUT' in conn_params['OPTIONS']:
+            parts.append('CPTimeout={}'.format(conn_params['OPTIONS']))
+
         connection_string = ';'.join(parts)
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
@@ -257,7 +261,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
                 RuntimeWarning
             )
             settings_dict = self.settings_dict.copy()
-            settings_dict['NAME'] = settings.DATABASES[DEFAULT_DB_ALIAS]['NAME']
+            settings_dict['NAME'] = None
             nodb_connection = self.__class__(
                 self.settings_dict.copy(),
                 alias=self.alias,
