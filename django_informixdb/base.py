@@ -193,7 +193,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         if 'PASSWORD' in conn_params:
             parts.append('Pwd={}'.format(conn_params['PASSWORD']))
         if 'CPTIMEOUT' in conn_params['OPTIONS']:
-            parts.append('CPTimeout={}'.format(conn_params['OPTIONS']))
+            parts.append('CPTimeout={}'.format(conn_params['OPTIONS']['CPTIMEOUT']))
 
         connection_string = ';'.join(parts)
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
@@ -204,6 +204,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection.setencoding(encoding='UTF-8')
 
         self.connection.add_output_converter(-101, self._handle_constraint)
+
         return self.connection
 
     def init_connection_state(self):
