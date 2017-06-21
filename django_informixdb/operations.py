@@ -57,7 +57,7 @@ class DatabaseOperations(BaseDatabaseOperations):
         return "COMMIT WORK"
 
     def savepoint_create_sql(self, sid):
-        return "SAVEPOINT %s ON ROLLBACK RETAIN CURSORS" % sid
+        return "SAVEPOINT %s" % sid
 
     def savepoint_commit_sql(self, sid):
         return "RELEASE SAVEPOINT %s" % sid
