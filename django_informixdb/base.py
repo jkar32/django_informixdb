@@ -6,11 +6,9 @@ Requires informixdb
 import os
 import sys
 import platform
-import warnings
 
 from django.db.backends.base.base import BaseDatabaseWrapper
 from django.db.backends.base.validation import BaseDatabaseValidation
-from django.db.utils import DatabaseError as WrappedDatabaseError, Error as WrappedError
 from django.core.exceptions import ImproperlyConfigured
 
 from django.utils.six import binary_type, text_type
@@ -246,28 +244,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def read_committed(self):
         self.cursor().execute('set isolation to committed read;')
-
-    @property
-    def _nodb_connection(self):
-        nodb_connection = super(DatabaseWrapper, self)._nodb_connection
-        try:
-            nodb_connection.ensure_connection()
-        except (pyodbc.Error, WrappedDatabaseError, WrappedError):
-            warnings.warn(
-                "Normally Django will use a connection to the database "
-                "to avoid running initialization queries against the production "
-                "database when it's not needed (for example, when running tests). "
-                "Django was unable to create a connection to the 'Informix' database "
-                "and will use the default database instead.",
-                RuntimeWarning
-            )
-            settings_dict = self.settings_dict.copy()
-            settings_dict['NAME'] = None
-            nodb_connection = self.__class__(
-                self.settings_dict.copy(),
-                alias=self.alias,
-                allow_thread_sharing=False)
-        return nodb_connection
 
     def _commit(self):
         if self.connection is not None:

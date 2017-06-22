@@ -10,4 +10,4 @@ class DatabaseCreation(BaseDatabaseCreation):
         )
         if test_settings['CHARSET']:
             return "WITH ENCODING '%s'" % test_settings['CHARSET']
-        return ''
+        return 'WITH BUFFERED LOG'
