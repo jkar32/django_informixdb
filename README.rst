@@ -147,13 +147,15 @@ The key entry in the compose file which is out of the ordinary is `tty: true`. T
 
 Once it is up and running with `docker-compose up` you can run a `bash` shell on the running container with:
 
-.. code-block::
+.. code-block:: bash
+
     docker exec -it informix_db_1 bash
 
 
 Where `informix_db_1` is the name of the running container. From this shell you can create your DB with `dbaccess` etc.
 
 .. warning::
+
     This approach still requires the SDK to installed locally and the appropriate environmental variables to be set up. Along with entries in `sqlhosts` and `/etc/services`
 
 
