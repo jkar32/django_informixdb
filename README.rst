@@ -147,7 +147,7 @@ The key entry in the compose file which is out of the ordinary is `tty: true`. T
 
 Once it is up and running with `docker-compose up` you can run a `bash` shell on the running container with:
 
-.. code-block:: bash
+.. code-block::
     docker exec -it informix_db_1 bash
 
 
