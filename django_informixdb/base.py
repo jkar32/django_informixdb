@@ -35,6 +35,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
     DRIVER_MAP = {
         'DARWIN': '/Applications/IBM/informix/lib/cli/iclit09b.dylib',
         'LINUX': '/opt/IBM/informix/lib/cli/iclit09b.so',
+        'WINDOWS32bit': 'IBM INFORMIX ODBC DRIVER (32-bit)',
+        'WINDOWS64bit': 'IBM INFORMIX ODBC DRIVER (64-bit)',
     }
 
     data_types = {
@@ -138,6 +140,8 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def get_driver_path(self):
         system = platform.system().upper()
+        if system == 'WINDOWS':
+            system = system + platform.architecture()[0]
         try:
             return self.DRIVER_MAP[system]
         except KeyError:
@@ -154,10 +158,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         # Ensure the driver is set in the options
         options = conn_params.get('OPTIONS', {})
-        if 'DRIVER' not in options:
+        if 'DRIVER' not in options or options['DRIVER'] is None:
             options['DRIVER'] = self.get_driver_path()
-        if not os.path.exists(options['DRIVER']):
-            raise ImproperlyConfigured('cannot find Informix driver at {}'.format(options['DRIVER']))
+        if platform.system().upper() != 'WINDOWS':
+            if not os.path.exists(options['DRIVER']):
+                raise ImproperlyConfigured('cannot find Informix driver at {}'.format(options['DRIVER']))
         conn_params['OPTIONS'] = options
 
         conn_params['AUTOCOMMIT'] = False if 'AUTOCOMMIT' not in conn_params else conn_params['AUTOCOMMIT']
