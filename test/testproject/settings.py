@@ -79,8 +79,8 @@ DATABASES = {
         'ENGINE': 'django_informixdb',
         'NAME': 'adapter',
         'SERVER': 'dev',
-        'USER': 'informix',
-        'PASSWORD': 'in4mix',
+        'USER': 'adapter',
+        'PASSWORD': 'adapter',
         'OPTIONS': {
             'DRIVER': '/Applications/IBM/informix/lib/cli/iclit09b.dylib'
         }
