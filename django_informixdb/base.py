@@ -63,7 +63,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'PositiveSmallIntegerField': 'smallint',
         'SlugField': 'lvarchar(%(max_length)s)',
         'SmallIntegerField': 'smallint',
-        'TextField': 'text',
+        'TextField': 'lvarchar(%(max_length)s)',
         'TimeField': 'datetime hour to second',
         'UUIDField': 'char(32)',
     }
