@@ -63,7 +63,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'PositiveSmallIntegerField': 'smallint',
         'SlugField': 'lvarchar(%(max_length)s)',
         'SmallIntegerField': 'smallint',
-        'TextField': 'text',
+        'TextField': 'lvarchar(%(max_length)s)',
         'TimeField': 'datetime hour to second',
         'UUIDField': 'char(32)',
     }
@@ -205,6 +205,14 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection.setdecoding(pyodbc.SQL_CHAR, encoding='UTF-8')
         self.connection.setdecoding(pyodbc.SQL_WMETADATA, encoding='UTF-8')
         self.connection.setencoding(encoding='UTF-8')
+
+        # This will set SQL_C_CHAR, SQL_C_WCHAR and SQL_BINARY to 32000
+        # this max length is actually just what the database internally
+        # supports. e.g. the biggest `LONGVARCHAR` field in informix is
+        # 32000, you would need to split anything bigger over multiple fields
+        # This limit will not effect schema defined lengths, which will just
+        # truncate values greater than the limit.
+        self.connection.maxwrite = 32000
 
         self.connection.add_output_converter(-101, self._handle_constraint)
 

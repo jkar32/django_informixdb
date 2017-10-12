@@ -67,3 +67,6 @@ target/
 
 # Sublime Text
 *sublime-*
+
+# Environment
+.envrc

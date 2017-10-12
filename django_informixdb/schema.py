@@ -1,10 +1,9 @@
-import sys
-
 from django.db.backends.base.schema import BaseDatabaseSchemaEditor
 from django.db.utils import ProgrammingError, DatabaseError
 
 
 class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
+
     sql_create_unique = "ALTER TABLE %(table)s ADD CONSTRAINT UNIQUE (%(columns)s) CONSTRAINT %(name)s "
     sql_create_fk = (
         "ALTER TABLE %(table)s ADD CONSTRAINT FOREIGN KEY (%(column)s) "
@@ -17,19 +16,18 @@ class DatabaseSchemaEditor(BaseDatabaseSchemaEditor):
     sql_alter_column_default = "MODIFY %(column)s DEFAULT "
     sql_alter_column_no_default = "MODIFY %(column)s DROP DEFAULT"
     sql_delete_column = "ALTER TABLE %(table)s DROP %(column)s"
-    # sql_create_table = ""
 
     def execute(self, sql, params=[]):
         """
-        override this to ignore informix error on create index
-         on the same column for foreign key
+        Informix adds and index to foreign keys automatically
+
+        This silence the error when Django tries to do the same thing independantly
         """
         try:
             super(DatabaseSchemaEditor, self).execute(sql, params)
         except (ProgrammingError, DatabaseError) as e:
-            if "CREATE INDEX" in sql:
-                sys.stderr.write("Fail to create index:{}\n".format(sql))
-            else:
+            if "CREATE INDEX" not in sql and 'Index already exists' not in str(e):
+                # ugh, that feels dirty
                 raise e
 
     def skip_default(self, field):
