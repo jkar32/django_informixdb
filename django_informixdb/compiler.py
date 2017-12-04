@@ -3,8 +3,6 @@ from django.db.models.sql import compiler
 
 class SQLCompiler(compiler.SQLCompiler):
     def as_sql(self, with_limits=True, with_col_aliases=False):
-        if with_limits and self.query.low_mark == self.query.high_mark:
-            return '', ()
         raw_sql, fields = super(SQLCompiler, self).as_sql(False, with_col_aliases)
 
         # special dialect to return first n rows
