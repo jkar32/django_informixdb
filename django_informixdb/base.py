@@ -215,8 +215,19 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection.maxwrite = 32000
 
         self.connection.add_output_converter(-101, self._handle_constraint)
+        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape('VARCHAR'))
 
         return self.connection
+
+    def _unescape(self, raw):
+        """
+        For some reason the Informix ODBC driver seems to double escape new line characters.
+
+        This little handler converts them back.
+
+        @todo: See if this applies to other escape characters
+        """
+        return raw.replace(b'\\n', b'\n')
 
     def init_connection_state(self):
         pass
