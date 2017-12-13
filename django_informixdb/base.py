@@ -227,7 +227,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         @todo: See if this applies to other escape characters
         """
-        return raw.replace(b'\\n', b'\n')
+        return raw.replace(b'\\n', b'\n').decode('UTF-8')
 
     def init_connection_state(self):
         pass
