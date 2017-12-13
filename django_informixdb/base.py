@@ -215,7 +215,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection.maxwrite = 32000
 
         self.connection.add_output_converter(-101, self._handle_constraint)
-        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape('VARCHAR'))
+        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape)
 
         return self.connection
 
