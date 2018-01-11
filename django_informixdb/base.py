@@ -3,6 +3,7 @@ informix database backend for Django.
 
 Requires informixdb
 """
+import logging
 import os
 import sys
 import platform
@@ -26,6 +27,9 @@ try:
 except ImportError as e:
     e = sys.exc_info()[1]
     raise ImproperlyConfigured("Error loading pyodbc module:{}".format(e))
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseWrapper(BaseDatabaseWrapper):
@@ -169,15 +173,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         return conn_params
 
-    def _handle_constraint(self, raw_data):
-        """
-        PyODBC will not handle a -101 type which is a informix constraint
-        This is a simple unpacking of a bytes type.
-        _idx: constraint id
-        _idtype: constraint type
-        """
-        return raw_data.decode('utf8')
-
     def get_new_connection(self, conn_params):
         parts = [
             'Driver={{{}}}'.format(conn_params['OPTIONS']['DRIVER']),
@@ -199,6 +194,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
             parts.append('CPTimeout={}'.format(conn_params['OPTIONS']['CPTIMEOUT']))
 
         connection_string = ';'.join(parts)
+        logging.debug('Connecting to Informix')
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
         self.connection.setdecoding(pyodbc.SQL_WCHAR, encoding='UTF-8')
@@ -214,8 +210,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # truncate values greater than the limit.
         self.connection.maxwrite = 32000
 
-        self.connection.add_output_converter(-101, self._handle_constraint)
+        self.connection.add_output_converter(-101, lambda r: r.decode('utf-8')) # Constraints
         self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape)
+        self.connection.add_output_converter(-391, lambda r: r.decode('utf-16-be'))  # Integrity Error
 
         return self.connection
 
@@ -233,6 +230,7 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         pass
 
     def create_cursor(self, name=None):
+        logging.debug('Creating Informix cursor')
         return CursorWrapper(self.connection.cursor(), self)
 
     def _set_autocommit(self, autocommit):
