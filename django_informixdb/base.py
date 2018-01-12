@@ -210,9 +210,9 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         # truncate values greater than the limit.
         self.connection.maxwrite = 32000
 
-        self.connection.add_output_converter(-101, lambda r: r.decode('utf-8')) # Constraints
-        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape)
+        self.connection.add_output_converter(-101, lambda r: r.decode('utf-8'))  # Constraints
         self.connection.add_output_converter(-391, lambda r: r.decode('utf-16-be'))  # Integrity Error
+        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape)
 
         return self.connection
 
