@@ -199,7 +199,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         self.connection.setdecoding(pyodbc.SQL_WCHAR, encoding='UTF-8')
         self.connection.setdecoding(pyodbc.SQL_CHAR, encoding='UTF-8')
-        self.connection.setdecoding(pyodbc.SQL_WMETADATA, encoding='UTF-8')
         self.connection.setencoding(encoding='UTF-8')
 
         # This will set SQL_C_CHAR, SQL_C_WCHAR and SQL_BINARY to 32000
