@@ -364,7 +364,7 @@ class CursorWrapper(object):
                 # yet, so we need to decode utf-8 data coming from the DB
                 if isinstance(f, binary_type):
                     row[i] = f.decode(self.driver_charset)
-        return row
+        return tuple(row)
 
     def fetchone(self):
         row = self.cursor.fetchone()
