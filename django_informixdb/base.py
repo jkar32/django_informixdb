@@ -213,8 +213,6 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         logging.debug('Connecting to Informix')
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
-        self.connection.setdecoding(pyodbc.SQL_WCHAR, encoding='UTF-8')
-        self.connection.setdecoding(pyodbc.SQL_CHAR, encoding='UTF-8')
         self.connection.setencoding(encoding='UTF-8')
 
         # This will set SQL_C_CHAR, SQL_C_WCHAR and SQL_BINARY to 32000
@@ -227,7 +225,13 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         self.connection.add_output_converter(-101, lambda r: r.decode('utf-8'))  # Constraints
         self.connection.add_output_converter(-391, lambda r: r.decode('utf-16-be'))  # Integrity Error
-        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._unescape)
+
+        self.connection.add_output_converter(pyodbc.SQL_CHAR, self._output_converter)
+        self.connection.add_output_converter(pyodbc.SQL_WCHAR, self._output_converter)
+        self.connection.add_output_converter(pyodbc.SQL_VARCHAR, self._output_converter)
+        self.connection.add_output_converter(pyodbc.SQL_WVARCHAR, self._output_converter)
+        self.connection.add_output_converter(pyodbc.SQL_LONGVARCHAR, self._output_converter)
+        self.connection.add_output_converter(pyodbc.SQL_WLONGVARCHAR, self._output_converter)
 
         return self.connection
 
@@ -239,7 +243,10 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
         @todo: See if this applies to other escape characters
         """
-        return raw.replace(b'\\n', b'\n').decode('UTF-8')
+        return raw.replace(b'\\n', b'\n')
+
+    def _output_converter(self, raw):
+        return decoder(self._unescape(raw), self.encodings)
 
     def init_connection_state(self):
         pass
