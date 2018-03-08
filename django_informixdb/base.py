@@ -32,6 +32,21 @@ except ImportError as e:
 logger = logging.getLogger(__name__)
 
 
+def decoder(value, encodings=('utf-8',)):
+    """This decoder tries multiple encodings before giving up"""
+
+    if not isinstance(value, binary_type):
+        raise ValueError(f"Not a binary type: {value} {type(value)}")
+
+    for enc in encodings:
+        try:
+            return value.decode(enc)
+        except UnicodeDecodeError:
+            pass
+
+    raise UnicodeDecodeError("unable to decode `{value}`")
+
+
 class DatabaseWrapper(BaseDatabaseWrapper):
     vendor = 'informixdb'
     Database = pyodbc
