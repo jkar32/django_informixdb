@@ -136,19 +136,20 @@ class DatabaseWrapper(BaseDatabaseWrapper):
 
     def __init__(self, *args, **kwargs):
         super(DatabaseWrapper, self).__init__(*args, **kwargs)
-        options = self.settings_dict.get('OPTIONS', None)
-        if options:
-            self.encoding = options.get('encoding', 'utf-8')
-            # make lookup operators to be collation-sensitive if needed
-            self.collation = options.get('collation', None)
-            if self.collation:
-                self.operators = dict(self.__class__.operators)
-                ops = {}
-                for op in self.operators:
-                    sql = self.operators[op]
-                    if sql.startswith('LIKE '):
-                        ops[op] = '%s COLLATE %s' % (sql, self.collation)
-                self.operators.update(ops)
+
+        options = self.settings_dict.get('OPTIONS', {})
+
+        self.encodings = options.get('encodings', ('utf-8', 'cp1252', 'iso-8859-1'))
+        # make lookup operators to be collation-sensitive if needed
+        self.collation = options.get('collation', None)
+        if self.collation:
+            self.operators = dict(self.__class__.operators)
+            ops = {}
+            for op in self.operators:
+                sql = self.operators[op]
+                if sql.startswith('LIKE '):
+                    ops[op] = '%s COLLATE %s' % (sql, self.collation)
+            self.operators.update(ops)
 
         self.features = self.features_class(self)
         self.ops = self.ops_class(self)
