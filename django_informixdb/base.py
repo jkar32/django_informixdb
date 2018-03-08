@@ -58,6 +58,12 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         'WINDOWS64bit': 'IBM INFORMIX ODBC DRIVER (64-bit)',
     }
 
+    ISOLATION_LEVEL = {
+        'READ_COMMITED': pyodbc.SQL_TXN_READ_COMMITTED,
+        'READ_UNCOMMITTED' : pyodbc.SQL_TXN_READ_UNCOMMITTED,  # Dirty Read
+        'SERIALIZABLE': pyodbc.SQL_TXN_SERIALIZABLE,
+    }
+
     data_types = {
         'AutoField': 'serial',
         'BigAutoField': 'bigserial',
@@ -214,6 +220,11 @@ class DatabaseWrapper(BaseDatabaseWrapper):
         self.connection = pyodbc.connect(connection_string, autocommit=conn_params['AUTOCOMMIT'])
 
         self.connection.setencoding(encoding='UTF-8')
+
+        # This will set database isolation level at connection level
+        if 'ISOLATION_LEVEL' in conn_params['OPTIONS']:
+            self.connection.set_attr(pyodbc.SQL_ATTR_TXN_ISOLATION,
+                                     self.ISOLATION_LEVEL[conn_params['OPTIONS']['ISOLATION_LEVEL']])
 
         # This will set SQL_C_CHAR, SQL_C_WCHAR and SQL_BINARY to 32000
         # this max length is actually just what the database internally
