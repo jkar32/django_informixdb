@@ -1,4 +1,5 @@
 import datetime
+import decimal
 import uuid
 
 from django.db.backends.base.operations import BaseDatabaseOperations
@@ -82,7 +83,9 @@ class DatabaseOperations(BaseDatabaseOperations):
         return converters
 
     def convert_decimalfield_value(self, value, expression, connection, context):
-        return backend_utils.typecast_decimal(expression.output_field.format_number(value))
+        value = expression.output_field.format_number(value)
+        if value is not None:
+            return decimal.Decimal(value)
 
     def convert_datefield_value(self, value, expression, connection, context):
         if value is not None and not isinstance(value, datetime.date):
