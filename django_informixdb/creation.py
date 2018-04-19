@@ -19,10 +19,12 @@ class DatabaseCreation(BaseDatabaseCreation):
 
         The keepdb option still works
         """
-        super().create_test_db(verbosity, True, serialize, keepdb)
+        if self.connection.settings_dict.get('TEST', {}).get('CREATE_DB', True):
+            super().create_test_db(verbosity, True, serialize, keepdb)
 
     def _destroy_test_db(self, test_database_name, verbosity):
-        try:
-            super()._destroy_test_db(test_database_name, verbosity)
-        except Error:
-            print("Unable to destroy test database")
+        if self.connection.settings_dict.get('TEST', {}).get('CREATE_DB', True):
+            try:
+                super()._destroy_test_db(test_database_name, verbosity)
+            except Error:
+                print("Unable to destroy test database")
