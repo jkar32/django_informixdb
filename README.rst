@@ -57,11 +57,20 @@ Django’s settings.py require the following format to connect to an Informix da
         'PASSWORD': 'passw0rd',
         'OPTIONS': {
             'DRIVER': '/path/to/iclit09b.so'. # Or iclit09b.dylib on macOS
-        }
+        },
+	'TEST': {
+	    'NAME': 'myproject',
+	    'CREATE_DB': False
+	}
     }
 
 .. note:
     The ``DRIVER`` option is optional, default locations will be used per platform if it is not provided.
+
+.. note:
+    The ``TEST`` option sets test parametes.  Use ``NAME`` to override the name of the test database
+    and set ``CREATE_DB`` to ``False`` to prevent Django from attempting to create a new test
+    database.
 
 Using with the Docker Informix Dev Database
 -------------------------------------------
@@ -162,7 +171,10 @@ Where `informix_db_1` is the name of the running container. From this shell you 
 Testing against an Informix Database
 ------------------------------------
 
-Due to a bug in the Informix ODBC driver, it is not currently possible to run Django tests normally. Specifically, it is not possible for Django to create a test database. As such, you will need to do it manually. By default Django will attempt to create a database with a name equal to the default database name with a ``test_`` prefix. e.g. if you database name is ``my_database``, the test database name would be ``test_my_database``.
+Due to a bug in the Informix ODBC driver, it is not currently possible to run Django tests normally. Specifically, it is not possible for Django to create a test database. As such, you will need to do it manually. By default Django will attempt to create a database with a name equal to the default database name with a ``test_`` prefix. e.g. if you database name is ``my_database``, the test database name would be ``test_my_database``.  This can be overridden with the ``NAME`` option under ``TEST``.
+
+To prevent Django from attempting to create a test database, set the ``CREATE_DB`` option
+under ``TEST`` to ``False``: see 'Configure settings.py' above.
 
 You can follow the steps above, in the section on using Informix locally with Docker to create a test database. Then when running the test you can tell Django to re-use an existing database, rather than trying to create a new one with the ``-k`` parameter:
 
