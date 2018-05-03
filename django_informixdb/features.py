@@ -3,6 +3,7 @@ from django.db.utils import InterfaceError
 
 
 class DatabaseFeatures(BaseDatabaseFeatures):
+    has_bulk_insert = True
     can_use_chunked_reads = True
     supports_microsecond_precision = False
     supports_regex_backreferencing = False
