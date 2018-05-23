@@ -3,7 +3,7 @@ from django.db.utils import InterfaceError
 
 
 class DatabaseFeatures(BaseDatabaseFeatures):
-    has_bulk_insert = False
+    has_bulk_insert = False     # informix does not have a bulk insert query
     can_use_chunked_reads = True
     supports_microsecond_precision = False
     supports_regex_backreferencing = False
